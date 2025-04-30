@@ -8,39 +8,52 @@
     web_url: string;
     headline: { main: string };
     snippet: string;
+    multimedia: {
+      caption: string;
+      credit: string;
+      default: {
+        url: string;
+        height: number;
+        width: number;
+      };
+      thumbnail: {
+        url: string;
+        height: number;
+        width: number;
+      };
+    };
   }
   
   let articles: Article[] = [];
-  let query = 'election';
+  let query = 'Sacramento';
 
-
+  // Fetch API key and articles sequentially
   onMount(async () => {
     try {
-      const res = await fetch('/api/key');
-      const data = await res.json();
-      apiKey = data.apiKey;
-    } catch (error) {
-      console.error('Failed to fetch API key:', error);
-    }
-  });
+      // Fetch the API key
+      const keyRes = await fetch('/api/key');
+      const keyData = await keyRes.json();
+      apiKey = keyData.apiKey;
 
-
-  onMount(async () => {
-    try {
-      const res = await fetch(
+      // Fetch articles only after the API key is loaded
+      const articlesRes = await fetch(
         `https://api.nytimes.com/svc/search/v2/articlesearch.json?q=${query}&api-key=${apiKey}`
       );
-      const data = await res.json();
-      articles = data.response.docs; // NYT API returns articles in `response.docs`
+      const articlesData = await articlesRes.json();
+      articles = articlesData.response.docs; // NYT API returns articles in `response.docs`
+      console.log(articles);
     } catch (error) {
-      console.error('Failed to fetch articles:', error);
+      console.error('Failed to fetch data:', error);
     }
   });
 
-
-
-
-  
+  // Helper function to get the image URL from an article's multimedia
+  function getArticleImage(article: Article): string {
+    if (article.multimedia && article.multimedia.default) {
+      return article.multimedia.default.url;
+    }
+    return '/image1.png'; // Fallback image
+  }
 </script>
 
 <main>
@@ -59,7 +72,7 @@
     </header>
 
     <section>
-      <h2>Results for "{query}"</h2>
+      <!-- <h2>Results for "{query}"</h2>
       <ul>
         {#each articles as article}
           <li>
@@ -67,64 +80,85 @@
             <p>{article.snippet}</p>
           </li>
         {/each}
-      </ul>
+      </ul> -->
         <div class="container">
             <div class="column">
                 <div class="section">
-                    <img src="/image2.png" alt="image of young kids playing basketball">
-                    <h2>Excepteur sint occaecat cupidatat non proident</h2>
-                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+                    {#if articles.length > 1}
+                        <img src={getArticleImage(articles[1])} alt={articles[1].headline.main}>
+                        <h2>{articles[1].headline.main}</h2>
+                        <p>{articles[1].snippet}</p>
+                    {:else}
+                        <img src="/image2.png" alt="Loading...">
+                        <h2>Loading articles...</h2>
+                        <p>Please wait while we fetch the latest news.</p>
+                    {/if}
                 </div>
                 <div class="section">
-                    <h2>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat</h2>
-                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+                    {#if articles.length > 2}
+                        <img src={getArticleImage(articles[2])} alt={articles[2].headline.main}>
+                        <h2>{articles[2].headline.main}</h2>
+                        <p>{articles[2].snippet}</p>
+                    {:else}
+                        <img src="/image2.png" alt="Loading...">
+                        <h2>Loading articles...</h2>
+                        <p>Please wait while we fetch the latest news.</p>
+                    {/if}
                 </div>
+            </div>
 
-            </div>
-    
             <div class="column">
                 <div class="section">
-                    <h1>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua</h1>
-                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-                    <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+                    {#if articles.length > 0}
+                        <img src={getArticleImage(articles[0])} alt={articles[0].headline.main}>
+                        <h1>{articles[0].headline.main}</h1>
+                        <p>{articles[0].snippet}</p>
+                    {:else}
+                        <img src="/image2.png" alt="Loading...">
+                        <h1>Loading articles...</h1>
+                        <p>Please wait while we fetch the latest news.</p>
+                    {/if}
                 </div>
                 <div class="section">
-                    <img src="/image3.png" alt="iconic image of the NYC Brooklyn Bridge">
-                    <h2>Lorem ipsum dolor sit amet, consectetur adipiscing elit</h2>
-                    <p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+                    {#if articles.length > 3}
+                        <img src={getArticleImage(articles[3])} alt={articles[3].headline.main}>
+                        <h2>{articles[3].headline.main}</h2>
+                        <p>{articles[3].snippet}</p>
+                    {:else}
+                        <img src="/image3.png" alt="Loading...">
+                        <h2>Loading articles...</h2>
+                        <p>Please wait while we fetch the latest news.</p>
+                    {/if}
                 </div>
             </div>
-    
+
             <div class="column">
                 <div class="section">
-                    <img src="/image1.png" alt="image of a salad with baby corn, lettuce, and boiled eggs">
-                    <h2>Lorem ipsum dolor sit amet, consectetur adipiscing elit?</h2>
-                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+                    {#if articles.length > 4}
+                        <img src={getArticleImage(articles[4])} alt={articles[4].headline.main}>
+                        <h2>{articles[4].headline.main}</h2>
+                        <p>{articles[4].snippet}</p>
+                    {:else}
+                        <img src="/image1.png" alt="Loading...">
+                        <h2>Loading articles...</h2>
+                        <p>Please wait while we fetch the latest news.</p>
+                    {/if}
                 </div>
                 <div class="section">
-                    <h2>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua</h2>
-                    <p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+                    {#if articles.length > 5}
+                        <img src={getArticleImage(articles[5])} alt={articles[5].headline.main}>
+                        <h2>{articles[5].headline.main}</h2>
+                        <p>{articles[5].snippet}</p>
+                    {:else}
+                        <img src="/image1.png" alt="Loading...">
+                        <h2>Loading articles...</h2>
+                        <p>Please wait while we fetch the latest news.</p>
+                    {/if}
                 </div>
             </div>
         </div>
     </section>
-
 </main>
 
 <style>
-  .logo {
-    height: 6em;
-    padding: 1.5em;
-    will-change: filter;
-    transition: filter 300ms;
-  }
-  .logo:hover {
-    filter: drop-shadow(0 0 2em #646cffaa);
-  }
-  .logo.svelte:hover {
-    filter: drop-shadow(0 0 2em #ff3e00aa);
-  }
-  .read-the-docs {
-    color: #888;
-  }
 </style>
