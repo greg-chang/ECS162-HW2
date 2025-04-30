@@ -1,6 +1,7 @@
 <script lang="ts">
   import './app.css';
   import { onMount } from 'svelte';
+  import { getFormattedDate, type FormattedDate } from './utils/dateUtils';
 
   let apiKey: string = '';
   
@@ -25,27 +26,59 @@
   }
   
   let articles: Article[] = [];
-  let query = 'Sacramento';
+  let locations = ['Sacramento', 'Davis'];
+  // Date formatting
+  let currentDate: string = '';
+  let dayName: string = '';
+  let monthName: string = '';
+  let dayOfMonth: string = '';
+  let year: string = '';
+
+  function updateDate() {
+    const formattedDate = getFormattedDate();
+    currentDate = formattedDate.currentDate;
+    dayName = formattedDate.dayName;
+    monthName = formattedDate.monthName;
+    dayOfMonth = formattedDate.dayOfMonth;
+    year = formattedDate.year;
+  }
+
+  let intervalId: number;
 
   // Fetch API key and articles sequentially
-  onMount(async () => {
+  onMount(() => {
+    updateDate();
+    intervalId = window.setInterval(updateDate, 60000);
+    fetchData();
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  });
+
+  async function fetchData() {
     try {
       // Fetch the API key
       const keyRes = await fetch('/api/key');
       const keyData = await keyRes.json();
       apiKey = keyData.apiKey;
 
+      // Create location filter query
+      const locationQuery = locations
+        .map(loc => `timesTag.location.contains:"${loc}"`)
+        .join(' OR ');
+
       // Fetch articles only after the API key is loaded
       const articlesRes = await fetch(
-        `https://api.nytimes.com/svc/search/v2/articlesearch.json?q=${query}&api-key=${apiKey}`
+        `https://api.nytimes.com/svc/search/v2/articlesearch.json?fq=(${locationQuery})&api-key=${apiKey}`
       );
       const articlesData = await articlesRes.json();
-      articles = articlesData.response.docs; // NYT API returns articles in `response.docs`
-      console.log(articles);
+      articles = articlesData.response.docs;
     } catch (error) {
       console.error('Failed to fetch data:', error);
     }
-  });
+  }
 
   // Helper function to get the image URL from an article's multimedia
   function getArticleImage(article: Article): string {
@@ -60,7 +93,10 @@
     <header>
         <div class="header-container">
             <div class="date-display">
-                <span id="current-date"></span>
+                <span id="current-date">
+                    <span class="day">{dayName}</span>, 
+                    <span class="date">{monthName} {dayOfMonth}, {year}</span>
+                </span>
                 <p>Today's Paper</p>
             </div>
             <div class="nyt-logo">
@@ -72,93 +108,27 @@
     </header>
 
     <section>
-      <!-- <h2>Results for "{query}"</h2>
-      <ul>
-        {#each articles as article}
-          <li>
-            <a href={article.web_url} target="_blank">{article.headline.main}</a>
-            <p>{article.snippet}</p>
-          </li>
+      <div class="container">
+        {#each articles as article, i}
+          <div class="column">
+            <div class="section">
+              {#if article.multimedia && article.multimedia.default}
+                <img src={article.multimedia.default.url} alt={article.headline.main}>
+              {:else}
+                <img src="/image1.png" alt="No image available">
+              {/if}
+              <h2>{article.headline.main}</h2>
+              <p>{article.snippet}</p>
+              {#if article.multimedia && article.multimedia.caption}
+                <p class="caption">{article.multimedia.caption}</p>
+              {/if}
+            </div>
+          </div>
         {/each}
-      </ul> -->
-        <div class="container">
-            <div class="column">
-                <div class="section">
-                    {#if articles.length > 1}
-                        <img src={getArticleImage(articles[1])} alt={articles[1].headline.main}>
-                        <h2>{articles[1].headline.main}</h2>
-                        <p>{articles[1].snippet}</p>
-                    {:else}
-                        <img src="/image2.png" alt="Loading...">
-                        <h2>Loading articles...</h2>
-                        <p>Please wait while we fetch the latest news.</p>
-                    {/if}
-                </div>
-                <div class="section">
-                    {#if articles.length > 2}
-                        <img src={getArticleImage(articles[2])} alt={articles[2].headline.main}>
-                        <h2>{articles[2].headline.main}</h2>
-                        <p>{articles[2].snippet}</p>
-                    {:else}
-                        <img src="/image2.png" alt="Loading...">
-                        <h2>Loading articles...</h2>
-                        <p>Please wait while we fetch the latest news.</p>
-                    {/if}
-                </div>
-            </div>
-
-            <div class="column">
-                <div class="section">
-                    {#if articles.length > 0}
-                        <img src={getArticleImage(articles[0])} alt={articles[0].headline.main}>
-                        <h1>{articles[0].headline.main}</h1>
-                        <p>{articles[0].snippet}</p>
-                    {:else}
-                        <img src="/image2.png" alt="Loading...">
-                        <h1>Loading articles...</h1>
-                        <p>Please wait while we fetch the latest news.</p>
-                    {/if}
-                </div>
-                <div class="section">
-                    {#if articles.length > 3}
-                        <img src={getArticleImage(articles[3])} alt={articles[3].headline.main}>
-                        <h2>{articles[3].headline.main}</h2>
-                        <p>{articles[3].snippet}</p>
-                    {:else}
-                        <img src="/image3.png" alt="Loading...">
-                        <h2>Loading articles...</h2>
-                        <p>Please wait while we fetch the latest news.</p>
-                    {/if}
-                </div>
-            </div>
-
-            <div class="column">
-                <div class="section">
-                    {#if articles.length > 4}
-                        <img src={getArticleImage(articles[4])} alt={articles[4].headline.main}>
-                        <h2>{articles[4].headline.main}</h2>
-                        <p>{articles[4].snippet}</p>
-                    {:else}
-                        <img src="/image1.png" alt="Loading...">
-                        <h2>Loading articles...</h2>
-                        <p>Please wait while we fetch the latest news.</p>
-                    {/if}
-                </div>
-                <div class="section">
-                    {#if articles.length > 5}
-                        <img src={getArticleImage(articles[5])} alt={articles[5].headline.main}>
-                        <h2>{articles[5].headline.main}</h2>
-                        <p>{articles[5].snippet}</p>
-                    {:else}
-                        <img src="/image1.png" alt="Loading...">
-                        <h2>Loading articles...</h2>
-                        <p>Please wait while we fetch the latest news.</p>
-                    {/if}
-                </div>
-            </div>
-        </div>
+      </div>
     </section>
 </main>
 
 <style>
+  
 </style>
