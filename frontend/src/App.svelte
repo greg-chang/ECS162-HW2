@@ -4,9 +4,13 @@
   import Header from './components/Header.svelte';
 
   let apiKey: string = '';
-  let page = 0;
-  let loading = false;
-  let hasMore = true;
+  let currentPage = 0;
+  let isLoading = false;
+  let hasMoreArticles = true;
+  let errorMessage = '';
+  let retryCount = 0;
+  const MAX_RETRIES = 3;
+  const RATE_LIMIT_DELAY = 1000; // 1 second delay between requests
   
   interface Article {
     web_url: string;
@@ -31,75 +35,106 @@
   let articles: Article[] = [];
   let locations = ['Sacramento', 'Davis'];
 
+  // Helper function to delay execution
+  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
   // Fetch API key and articles sequentially
   onMount(() => {
     fetchData();
+    // Add scroll event listener
+    window.addEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
   });
 
-  async function fetchData(isLoadMore = false) {
-    if (loading || !hasMore) return;
+  function handleScroll() {
+    if (isLoading || !hasMoreArticles || errorMessage) return;
+    
+    const scrollPosition = window.innerHeight + window.scrollY;
+    const threshold = document.documentElement.scrollHeight - 1000;
+    
+    if (scrollPosition >= threshold) {
+      loadMoreArticles();
+    }
+  }
+
+  async function loadMoreArticles() {
+    if (isLoading || !hasMoreArticles || errorMessage) return;
+    
+    currentPage++;
+    await fetchArticles();
+  }
+
+  async function fetchData() {
+    try {
+      errorMessage = '';
+      retryCount = 0;
+      // Fetch the API key
+      const keyRes = await fetch('/api/key');
+      const keyData = await keyRes.json();
+      apiKey = keyData.apiKey;
+      
+      // Reset state for new search
+      currentPage = 0;
+      articles = [];
+      hasMoreArticles = true;
+      
+      await fetchArticles();
+    } catch (error) {
+      console.error('Failed to fetch data:', error);
+      errorMessage = 'Failed to initialize the application. Please try refreshing the page.';
+    }
+  }
+
+  async function fetchArticles() {
+    if (isLoading) return;
     
     try {
-      loading = true;
+      isLoading = true;
+      errorMessage = '';
       
-      if (!isLoadMore) {
-        // Only fetch API key on initial load
-        const keyRes = await fetch('/api/key');
-        const keyData = await keyRes.json();
-        apiKey = keyData.apiKey;
-      }
-
-      // Create location filter query
+      // Add delay between requests to prevent rate limiting
+      await delay(RATE_LIMIT_DELAY);
+      
       const locationQuery = locations
         .map(loc => `timesTag.location.contains:"${loc}"`)
         .join(' OR ');
       
-      // Fetch articles with pagination
       const articlesRes = await fetch(
-        `https://api.nytimes.com/svc/search/v2/articlesearch.json?fq=(${locationQuery})&page=${page}&api-key=${apiKey}`
+        `https://api.nytimes.com/svc/search/v2/articlesearch.json?fq=(${locationQuery})&page=${currentPage}&api-key=${apiKey}`
       );
+
+      if (!articlesRes.ok) {
+        if (articlesRes.status === 429 && retryCount < MAX_RETRIES) {
+          // Rate limit hit, wait longer and retry
+          retryCount++;
+          const backoffDelay = RATE_LIMIT_DELAY * Math.pow(2, retryCount);
+          await delay(backoffDelay);
+          return fetchArticles();
+        }
+        throw new Error(`HTTP error! status: ${articlesRes.status}`);
+      }
+
       const articlesData = await articlesRes.json();
       
-      if (isLoadMore) {
-        articles = [...articles, ...articlesData.response.docs];
+      const newArticles = articlesData.response.docs;
+      if (newArticles.length === 0) {
+        hasMoreArticles = false;
       } else {
-        articles = articlesData.response.docs;
+        articles = [...articles, ...newArticles];
       }
-
-      // Check if we have more articles to load
-      hasMore = articlesData.response.docs.length > 0;
-      page++;
       
+      // Reset retry count on successful request
+      retryCount = 0;
     } catch (error) {
-      console.error('Failed to fetch data:', error);
+      console.error('Failed to fetch articles:', error);
+      errorMessage = 'Failed to load more articles. Please try again later.';
+      hasMoreArticles = false;
     } finally {
-      loading = false;
+      isLoading = false;
     }
   }
-
-  // Intersection Observer for infinite scroll
-  let loadMoreTrigger: HTMLElement;
-
-  onMount(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !loading && hasMore) {
-          fetchData(true);
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    if (loadMoreTrigger) {
-      observer.observe(loadMoreTrigger);
-    }
-
-    return () => {
-      if (loadMoreTrigger) {
-        observer.unobserve(loadMoreTrigger);
-      }
-    };
-  });
 
   // Helper function to get the image URL from an article's multimedia
   function getArticleImage(article: Article): string {
@@ -131,25 +166,32 @@
             </div>
           </div>
         {/each}
-        
-        {#if hasMore}
-          <div class="load-more" bind:this={loadMoreTrigger}>
-            {#if loading}
-              <p>Loading more articles...</p>
-            {/if}
-          </div>
-        {/if}
       </div>
+      {#if isLoading}
+        <div class="loading">Loading more articles...</div>
+      {/if}
+      {#if errorMessage}
+        <div class="error">{errorMessage}</div>
+      {/if}
     </section>
 </main>
 
 <style>
-  .load-more {
-    width: 100%;
-    height: 50px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin: 20px 0;
+  .loading {
+    text-align: center;
+    padding: 20px;
+    font-style: italic;
+    color: #666;
+  }
+  
+  .error {
+    text-align: center;
+    padding: 20px;
+    color: #dc3545;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    margin: 20px auto;
+    max-width: 600px;
   }
 </style>
