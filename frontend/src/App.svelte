@@ -128,7 +128,3 @@
       </div>
     </section>
 </main>
-
-<style>
-  
-</style>

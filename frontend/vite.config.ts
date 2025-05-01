@@ -3,6 +3,13 @@ import { svelte } from '@sveltejs/vite-plugin-svelte'
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => ({
+  
+  resolve: process.env.VITEST
+    ? {
+        conditions: ['svelte', 'browser'],
+      }
+    : undefined,
+
   plugins: [svelte()],
   server: mode === 'development' ? {
     proxy: {
