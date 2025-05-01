@@ -63,18 +63,21 @@
       const keyRes = await fetch('/api/key');
       const keyData = await keyRes.json();
       apiKey = keyData.apiKey;
-
+      console.log(apiKey);
       // Create location filter query
       const locationQuery = locations
         .map(loc => `timesTag.location.contains:"${loc}"`)
         .join(' OR ');
+      
+      console.log(`https://api.nytimes.com/svc/search/v2/articlesearch.json?fq=(${locationQuery})&api-key=${apiKey}`);
 
       // Fetch articles only after the API key is loaded
       const articlesRes = await fetch(
         `https://api.nytimes.com/svc/search/v2/articlesearch.json?fq=(${locationQuery})&api-key=${apiKey}`
       );
       const articlesData = await articlesRes.json();
-      articles = articlesData.response.docs;
+      articles = articlesData.response.docs.slice(0, 9);
+      console.log(articles);
     } catch (error) {
       console.error('Failed to fetch data:', error);
     }
@@ -98,13 +101,13 @@
                     <span class="date">{monthName} {dayOfMonth}, {year}</span>
                 </span>
                 <p>Today's Paper</p>
+                <p>API Key: {apiKey}</p>
             </div>
             <div class="nyt-logo">
                 <img src="/nyt-logo.png" alt="New York Times Logo">
             </div>
         </div>
         <hr>
-        <p>API Key: {apiKey}</p>
     </header>
 
     <section>
