@@ -1,5 +1,6 @@
 import { beforeAll, afterAll, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
+import '@testing-library/jest-dom/vitest';
 
 const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', {
   url: 'http://localhost',
