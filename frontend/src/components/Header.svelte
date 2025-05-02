@@ -40,7 +40,7 @@
                 <span class="day">{dayName}</span>, 
                 <span class="date">{monthName} {dayOfMonth}, {year}</span>
             </span>
-            <p>Today's Paper</p>
+            <p>Sacramento and Davis Papers</p>
         </div>
         <div class="nyt-logo">
             <img src="/nyt-logo.png" alt="New York Times Logo">
