@@ -13,7 +13,7 @@ describe('Header', () => {
   });
 
   it('renders header elements', () => {
-    render(Header, { props: { apiKey: 'test-key' } });
+    render(Header);
     
     // Check date elements
     expect(screen.getByText(/Monday/)).toBeTruthy();
@@ -21,7 +21,7 @@ describe('Header', () => {
     expect(screen.getByText(/2024/)).toBeTruthy();
     
     // Check other elements
-    expect(screen.getByText("Today's Paper")).toBeTruthy();
+    expect(screen.getByText("Sacramento and Davis Papers")).toBeTruthy();
     expect(screen.getByAltText("New York Times Logo")).toBeTruthy();
   });
 });
