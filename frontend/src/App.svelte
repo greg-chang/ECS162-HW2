@@ -206,22 +206,3 @@
     </section>
 </main>
 
-<style>
-  .loading {
-    text-align: center;
-    padding: 20px;
-    font-style: italic;
-    color: #666;
-  }
-  
-  .error {
-    text-align: center;
-    padding: 20px;
-    color: #dc3545;
-    background-color: #f8d7da;
-    border: 1px solid #f5c6cb;
-    border-radius: 4px;
-    margin: 20px auto;
-    max-width: 600px;
-  }
-</style>
