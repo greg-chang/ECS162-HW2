@@ -41,7 +41,6 @@
                 <span class="date">{monthName} {dayOfMonth}, {year}</span>
             </span>
             <p>Today's Paper</p>
-            <p>API Key: {apiKey}</p>
         </div>
         <div class="nyt-logo">
             <img src="/nyt-logo.png" alt="New York Times Logo">
