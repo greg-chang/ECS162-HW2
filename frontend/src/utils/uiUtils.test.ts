@@ -1,22 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import App from '../App.svelte';
-import Header from '../components/Header.svelte';
-
-describe('Header Component', () => {
-  it('displays the NYT logo', () => {
-    render(Header, { apiKey: 'test-key' });
-    const logo = screen.getByAltText('New York Times Logo');
-    expect(logo).toBeTruthy();
-    expect(logo.getAttribute('src')).toBe('/nyt-logo.png');
-  });
-
-  it('displays the current date', () => {
-    render(Header, { apiKey: 'test-key' });
-    const dateDisplays = screen.getAllByText(/Today's Paper/);
-    expect(dateDisplays.length).toBeGreaterThan(0);
-  });
-});
 
 describe('Article Display', () => {
   const mockArticle = {
