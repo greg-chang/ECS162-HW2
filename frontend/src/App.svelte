@@ -180,16 +180,19 @@
         {#each articles as article, i}
           <div class="column">
             <div class="section">
-              {#if article.multimedia && article.multimedia.default}
-                <img src={article.multimedia.default.url} alt={article.headline.main}>
-              {:else}
-                <img src="/image1.png" alt="No image available">
-              {/if}
-              <h2>{article.headline.main}</h2>
-              <p>{article.snippet}</p>
-              {#if article.multimedia && article.multimedia.caption}
-                <p class="caption">{article.multimedia.caption}</p>
-              {/if}
+              <div class="section-content">
+                {#if article.multimedia && article.multimedia.default}
+                  <img src={article.multimedia.default.url} alt={article.headline.main}>
+                {:else}
+                  <img src="/image1.png" alt="No image available">
+                {/if}
+                <h2>{article.headline.main}</h2>
+                <p>{article.snippet}</p>
+                {#if article.multimedia && article.multimedia.caption}
+                  <p class="caption">{article.multimedia.caption}</p>
+                {/if}
+              </div>
+              <hr />
             </div>
           </div>
         {/each}
