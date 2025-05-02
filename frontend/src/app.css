@@ -156,7 +156,20 @@ hr {
     position: relative;
     padding-top: 20px;
     border-top: 2px solid #D9D9D9;
-    min-height: 200px; 
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.section-content {
+    flex: 1;
+}
+
+.section hr {
+    border: 1px solid #D9D9D9;
+    margin: 20px 0 0 0;
+    width: 100%;
 }
 
 /* Update section height in media queries */
@@ -287,6 +300,9 @@ hr {
         order: 3;
         grid-column: 3;
         grid-row: 1;
+        border-right: none;
+        padding-right: 0;
+        margin-right: 0;
     }
 
     /* Remove top border from first section in each column */
