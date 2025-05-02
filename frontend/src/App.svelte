@@ -11,6 +11,7 @@
   let retryCount = 0;
   const MAX_RETRIES = 3;
   const RATE_LIMIT_DELAY = 1000; // 1 second delay between requests
+  const RESULTS_PER_PAGE = 20; // Increased from default 10 to 20
   
   interface Article {
     web_url: string;
@@ -118,6 +119,23 @@
 
       const articlesData = await articlesRes.json();
       
+      // Check if the response has the expected structure
+      if (!articlesData?.response) {
+        console.error('Invalid response structure:', articlesData);
+        if (articlesData?.fault) {
+          throw new Error(`API Error: ${articlesData.fault.faultstring || 'Unknown API error'}`);
+        }
+        throw new Error('Invalid API response structure');
+      }
+
+      // Check if we've reached the maximum number of results (1000)
+      const totalHits = articlesData.response.metadata.hits;
+      const currentOffset = currentPage * RESULTS_PER_PAGE;
+      if (currentOffset >= 1000 || articlesData.response.docs === null || totalHits === 0) {
+        hasMoreArticles = false;
+        return;
+      }
+
       const newArticles = articlesData.response.docs;
       if (newArticles.length === 0) {
         hasMoreArticles = false;
